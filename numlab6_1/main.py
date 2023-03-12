@@ -3,12 +3,15 @@ from matplotlib import pyplot as plt
 from matplotlib.animation import ArtistAnimation
 
 h = 0.025
+n = 500
 c = 0.7
 start = 0
 end = 10
 initStart = 1
 initEnd = 2
-
+a = 1
+#c = at/h
+t_end = 7
 
 def exp_func(x, x_0, e):
     if abs(x - x_0) >= e:
@@ -16,16 +19,18 @@ def exp_func(x, x_0, e):
     return np.exp(-(x - x_0) ** 2 / (e ** 2 - (x - x_0) ** 2))
 
 
-def get_real_sqr(i, x):
-    if (initStart + i * c * h <= x <= initEnd + i * c * h):
+def get_real_sqr(t, x):
+    # if (initStart + i * c * h <= x <= initEnd + i * c * h):
+    if initStart + a * t <= x <= initEnd + a * t:
         return 1
     return 0
 
 
-def get_real_exp(i, x, x_0, e):
-    if abs(x - x_0 - i * c * h) >= e:
+def get_real_exp(t, x, x_0, e):
+    # if abs(x - x_0 - i * c * h) >= e:
+    if abs(x - x_0 - a * t) >= e:
         return 0
-    return np.exp(-(x - x_0 - i * c * h) ** 2 / (e ** 2 - (x - x_0 - i * c * h) ** 2))
+    return np.exp(-(x - x_0 - a * t) ** 2 / (e ** 2 - (x - x_0 - a * t) ** 2))
 
 
 def get_error(func, realFunc):
@@ -33,9 +38,10 @@ def get_error(func, realFunc):
 
 
 def plot_angle_sqr():
-    x = np.arange(start, end, h)
+    # x = np.arange(start, end, h)
+    x = np.linspace(start, end, n)
+    h = (end - start) / n
     u = [1 if (initStart <= point <= initEnd) else 0 for point in x]
-    current = 0
 
     fig, ax = plt.subplots()
 
@@ -44,17 +50,21 @@ def plot_angle_sqr():
     frames.append(ax.plot(x, [get_real_sqr(0, point) for point in x], color='g'))
 
     errors = []
-    for k in range(len(x)):
+    t = 0
+    k = 0
+    # for k in range(len(x)):
+    while t < t_end:
+        t += c * h / a
         v = [0 if j == 0 else u[j] - c * (u[j] - u[j - 1]) for j in range(len(x))]
-        realFunc = [get_real_sqr(k + 1, point) for point in x]
+        realFunc = [get_real_sqr(t, point) for point in x]
         line, = ax.plot(x, v, color='b')
         realLine, = ax.plot(x, realFunc, color='g')
         frames.append([line, realLine])
         errors.append(get_error(v, realFunc))
         u, v = v, u
-        current += 1
+        k += 1
 
-    print(errors)
+    print(errors[-1])
     animation = ArtistAnimation(
         fig,  # фигура, где отображается анимация
         frames,  # кадры
@@ -66,11 +76,13 @@ def plot_angle_sqr():
 
 
 def plot_angle_exp():
-    x = np.arange(start, end, h)
+    nn = np.arange(1000, 5000, 500)
+    x = np.linspace(start, end, n)
+    # h = (end - start) / n
+    h = x[1] - x[0]
     x_0 = 1
     e = 0.3
     u = [exp_func(point, x_0, e) for point in x]
-    current = 0
 
     fig, ax = plt.subplots()
 
@@ -81,16 +93,20 @@ def plot_angle_exp():
     frames.append([line, realLine])
 
     errors = []
-    for k in range(len(x)):
+    t = 0
+    k = 0
+
+    while t < t_end:
+        t += c * h / a
         v = [0 if j == 0 else u[j] - c * (u[j] - u[j - 1]) for j in range(len(x))]
-        realFunc = [get_real_exp(k + 1, point, x_0, e) for point in x]
+        realFunc = [get_real_exp(t, point, x_0, e) for point in x]
         line, = ax.plot(x, v, color='b')
         realLine, = ax.plot(x, realFunc, color='g')
         frames.append([line, realLine])
         errors.append(get_error(v, realFunc))
         u, v = v, u
-        current += 1
-    print(errors)
+        k += 1
+
     animation = ArtistAnimation(
         fig,  # фигура, где отображается анимация
         frames,  # кадры
@@ -100,11 +116,37 @@ def plot_angle_exp():
 
     animation.save('angle_exp.gif', writer='imagemagick')
 
+def calc_errors():
+    nn = np.arange(3000, 7000, 500)
+    hh = []
+    all_errs = []
+    for n in range(3000,7000, 500):
+        x = np.linspace(start, end, n)
+        # h = (end - start) / n
+        h = x[1] - x[0]
+        hh.append(h)
+        x_0 = 1
+        e = 0.3
+        u = [exp_func(point, x_0, e) for point in x]
+        errors = []
+        t = 0
+        k = 0
+        while t < t_end:
+            t += c * h / a
+            v = [0 if j == 0 else u[j] - c * (u[j] - u[j - 1]) for j in range(len(x))]
+            realFunc = [get_real_exp(t, point, x_0, e) for point in x]
+            errors.append(get_error(v, realFunc))
+            u, v = v, u
+            k += 1
+        print(len(errors))
+        print(max(errors))
+        all_errs.append(max(errors))
+    plt.plot(hh, all_errs)
+    plt.show()
 
 def plot_quatro_sqr():
     x = np.arange(start, end, h)
     u = [1 if (initStart <= point <= initEnd) else 0 for point in x]
-    current = 0
 
     fig, ax = plt.subplots()
 
@@ -116,7 +158,6 @@ def plot_quatro_sqr():
         line, = ax.plot(x, v, color='b')
         frames.append([line])
         u, v = v, u
-        current += 1
 
     animation = ArtistAnimation(
         fig,  # фигура, где отображается анимация
@@ -128,5 +169,4 @@ def plot_quatro_sqr():
     animation.save('quatro_sqr.gif', writer='imagemagick')
 
 
-plot_angle_sqr()
-plot_angle_exp()
+calc_errors()
