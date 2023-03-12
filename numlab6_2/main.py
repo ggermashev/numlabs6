@@ -45,11 +45,12 @@ def solve(func):
     e = 0.3
     u = [func(point, x0, e) for point in x]
 
-    fig, ax = plt.subplots()
+    fig, (ax1, ax2) = plt.subplots(1, 2)
 
     frames = []
-    line, = ax.plot(x, u, color='b')
-    realLine, = ax.plot(x, u, color='g')
+    err_frames = []
+    line, = ax1.plot(x, u, color='b')
+    realLine, = ax1.plot(x, u, color='g')
     frames.append([line, realLine])
 
     errors = []
@@ -59,13 +60,15 @@ def solve(func):
     while t < t_max:
         t += c * h / a
         v = [0 if j == 0 or j == len(x) - 1 else u[j] + c ** 2 / 2 * (u[j + 1] - 2 * u[j] + u[j - 1]) - c / 2 * (
-                    u[j + 1] - u[j - 1]) for j
+                u[j + 1] - u[j - 1]) for j
              in range(len(x))]
         realFunc = [func(point - a * t, x0, e) for point in x]
-        line, = ax.plot(x, v, color='b')
-        realLine, = ax.plot(x, realFunc, color='g')
-        frames.append([line, realLine])
-        errors.append(get_error(v, realFunc))
+        line, = ax1.plot(x, v, color='b')
+        realLine, = ax1.plot(x, realFunc, color='g')
+        error = get_error(v, realFunc)
+        errors.append(error)
+        err_plot, = ax2.plot(x[:len(errors)], errors, color='r')
+        frames.append([line, realLine, err_plot])
         u, v = v, u
         k += 1
 
